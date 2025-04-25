@@ -11,6 +11,8 @@ app.get('/proxy', async (req, res) => {
   }
 
   const videoUrl = `https://d1.flnd.buzz${videoPath}`;
+  console.log(`Proxying: ${videoUrl}`);
+
   try {
     const response = await axios.get(videoUrl, {
       headers: {
@@ -19,6 +21,8 @@ app.get('/proxy', async (req, res) => {
       },
       responseType: 'stream'
     });
+
+    console.log('Video stream started successfully.');
 
     res.setHeader('Content-Type', 'video/mp4');
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -30,5 +34,5 @@ app.get('/proxy', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Video proxy running on port ${PORT}`);
+  console.log(`Proxy running on port ${PORT}`);
 });
