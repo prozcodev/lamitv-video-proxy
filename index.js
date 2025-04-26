@@ -4,17 +4,24 @@ const app = express();
 
 const PORT = process.env.PORT || 3000;
 
-// Root test route
+// Allowed domains
+const allowedDomains = [
+  'https://d1.flnd.buzz',
+  'https://p1.flnd.buzz',
+];
+
 app.get('/', (req, res) => {
   res.send('🎥 LamiTV Proxy is running');
 });
 
-// Video proxy
 app.get('/proxy', async (req, res) => {
   const videoUrl = req.query.url;
 
-  // Basic validation
-  if (!videoUrl || !videoUrl.startsWith('https://d1.flnd.buzz')) {
+  // Basic validation: allow multiple origins
+  if (
+    !videoUrl ||
+    !allowedDomains.some(domain => videoUrl.startsWith(domain))
+  ) {
     return res.status(400).send('Invalid or missing video URL');
   }
 
