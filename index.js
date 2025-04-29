@@ -32,12 +32,11 @@ app.get('/proxy', async (req, res) => {
         'User-Agent': 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/135.0 Mobile Safari/537.36'
       },
       responseType: 'stream',
-      timeout: 10000,
+      timeout: 1000,
     });
 
     res.setHeader('Content-Type', 'video/mp4');
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.flushHeaders(); // 💨 Send headers early to browser
     response.data.pipe(res);
   } catch (err) {
     console.error('Proxy error:', err.message);
@@ -47,11 +46,4 @@ app.get('/proxy', async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Proxy running on port ${PORT}`);
-});
-const { pipeline } = require('stream');
-pipeline(response.data, res, (err) => {
-  if (err) {
-    console.error('Pipeline failed:', err);
-    res.sendStatus(500);
-  }
 });
