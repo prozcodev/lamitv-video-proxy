@@ -17,30 +17,40 @@ app.get('/', (req, res) => {
 app.get('/proxy', async (req, res) => {
   const videoUrl = req.query.url;
 
-  // Basic validation: allow multiple origins
-  if (
-    !videoUrl ||
-    !allowedDomains.some(domain => videoUrl.startsWith(domain))
-  ) {
+  // Basic validation
+  if (!videoUrl || !allowedDomains.some(domain => videoUrl.startsWith(domain))) {
     return res.status(400).send('Invalid or missing video URL');
   }
 
   try {
+    console.log('Fetching:', videoUrl);
     const response = await axios.get(videoUrl, {
       headers: {
-        Referer: 'https://farsiland.com',
-        'User-Agent': 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/135.0 Mobile Safari/537.36'
+        'Referer': 'https://farsiland.com', // 👈 Spoof Referer for destination server
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/135.0.0.0 Safari/537.36',
+        'Accept-Encoding': 'identity;q=1, *;q=0', // Avoid gzip chunk issues
+        'Range': req.headers['range'] || 'bytes=0-' // Support video streaming and scrubbing
       },
       responseType: 'stream',
-      timeout: 1000,
+      timeout: 15000,
+      validateStatus: status => true, // Accept any HTTP code
     });
 
-    res.setHeader('Content-Type', 'video/mp4');
     res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Content-Type', response.headers['content-type'] || 'video/mp4');
+
+    if (response.headers['content-length']) {
+      res.setHeader('Content-Length', response.headers['content-length']);
+    }
+    if (response.headers['content-range']) {
+      res.setHeader('Content-Range', response.headers['content-range']);
+      res.status(206); // Partial Content
+    }
+
     response.data.pipe(res);
-  } catch (err) {
-    console.error('Proxy error:', err.message);
-    res.status(500).send('Could not load video');
+  } catch (error) {
+    console.error('Proxy error:', error.message);
+    res.status(500).send('Proxy error fetching the video.');
   }
 });
 
